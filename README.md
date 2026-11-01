@@ -11,14 +11,47 @@
 This project aims to provide a cohesive and centralized access to eBay Market Data for use by both Sellers and Buyers, providing a more complete and intuivitive approach to market research on an item-to-item basis.   
 ---
 ## User Stories
-### User Story 1
+### User Story 1: As a seller, I want to estimate an item's net profit based on its target price, market value, and selling costs so that I can make informed pricing decisions.
 ### User Story 2: As a seller who wants to sell multiple items, I want to receive a ranked list of selling priorities so that I can decide which items to sell first and use my time more efficiently.
 ### User Story 3: As a buyer, I'd like to view pricing and quality data for an item I'm considering purchasing so I can set realistic spending expectations.
 ### User Story 4
 (Add additional user stories as needed.)
 ---
 ## Use Cases
-### Use Case 1
+### Use Case 1: Analyze Estimate Net Profit
+Primary Actor: eBay Seller performing an item search and pricing analysis.
+
+Preconditions:
+ -The user is in the Seller view of the application.
+
+Trigger: The seller enters a product name and their desired selling price into the system.
+
+Success Outcome: The system retrieves relevant market data, calculates estimated selling costs and net profit, and presents pricing recommendations to the seller.
+
+Main Success Scenario:
+1. The seller enters a product name or keywords.
+2. The system retrieves relevant product and historical market pricing data.
+3. The system displays available market information, including historical prices and sales data.
+4. The seller enters their target selling price.
+5. The seller enters estimated shipping and packaging costs.
+6. The system calculates applicable eBay fees and total selling costs.
+7. The system calculates the estimated net profit and profit margin.
+8. The system compares potential profits at different selling prices.
+9. The system displays the final pricing analysis to the seller.
+
+Extensions:
+
+2a. No valid market data is found.
+ -i. The system notifies the seller that no relevant market data is available.
+ -ii. The seller can manually enter product pricing information or try another search.
+
+5a. Some cost information is missing.
+ -i. The system asks the seller to provide the missing information.
+ -ii. The seller can enter the missing costs before continuing.
+
+6a. The eBay API is unavailable.
+ -i. The system displays an error message.
+ -ii. The seller can retry the request or use available sample data.
 ### Use Case 2: Generate Selling Priority Recommendations
 Primary Actor: Seller who wants to sell multiple items.
 
