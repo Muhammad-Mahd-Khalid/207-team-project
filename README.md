@@ -120,7 +120,7 @@ Extensions:
 | Team Member | MVP Use Case |
 |-------------|--------------|
 | Name | Use Case |
-| Name | Use Case |
+| Reyna | Generate Selling Priority Recommendations |
 | Name | Use Case |
 | Name | Use Case |
 ---
@@ -137,6 +137,9 @@ Extensions:
 ## Design Diagrams
 ### UML Class Diagram
 ### Sequence Diagrams
+#### Selling Priority Recommendations
+
+![Selling Priority Sequence Diagram](docs/diagrams/selling-priority-sequence.png)
 ---
 ## How to Run
 [Instructions for running the program.]
