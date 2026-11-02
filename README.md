@@ -119,7 +119,7 @@ Extensions:
 ## Minimal Viable Product (MVP)
 | Team Member | MVP Use Case |
 |-------------|--------------|
-| Name | Use Case |
+| Harry Jia | Analyze Estimate Net Profit |
 | Reyna | Generate Selling Priority Recommendations |
 | Name | Use Case |
 | Name | Use Case |
@@ -137,6 +137,30 @@ Extensions:
 ## Design Diagrams
 ### UML Class Diagram
 ### Sequence Diagrams
+#### Generate Selling Priority Recommendations
+```mermaid
+sequenceDiagram
+actor Seller
+participant UI as Java Swing UI
+participant Controller
+participant API as eBay API
+participant Analysis as Profit Analysis
+
+    Seller->>UI: Enter product information
+    Seller->>UI: Enter target selling price
+    UI->>Controller: Submit product details
+
+    Controller->>API: Search comparable products
+    API-->>Controller: Return market listing data
+
+    Controller->>Analysis: Calculate estimated profit
+    Analysis->>Analysis: Calculate eBay fees
+    Analysis->>Analysis: Calculate net profit and margin
+
+    Analysis-->>Controller: Return analysis results
+    Controller-->>UI: Display results
+    UI-->>Seller: Show profit and market comparison
+```
 #### Selling Priority Recommendations
 
 ![Selling Priority Sequence Diagram](docs/diagrams/selling-priority-sequence.png)
