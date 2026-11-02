@@ -137,7 +137,7 @@ Extensions:
 ## Design Diagrams
 ### UML Class Diagram
 ### Sequence Diagrams
-#### Generate Selling Priority Recommendations
+#### Analyze Estimate Net Profit
 ```mermaid
 sequenceDiagram
 actor Seller
