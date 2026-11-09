@@ -14,8 +14,7 @@ This project aims to provide a cohesive and centralized access to eBay Market Da
 ### User Story 1: As a seller, I want to estimate an item's net profit based on its target price, market value, and selling costs so that I can make informed pricing decisions.
 ### User Story 2: As a seller who wants to sell multiple items, I want to receive a ranked list of selling priorities so that I can decide which items to sell first and use my time more efficiently.
 ### User Story 3: As a buyer, I'd like to view pricing and quality data for an item I'm considering purchasing so I can set realistic spending expectations.
-### User Story 4
-(Add additional user stories as needed.)
+### User Story 4: As a buyer, I want to save items to a wishlist and view them later so that I can keep track of items I am considering buying.
 ---
 ## Use Cases
 ### Use Case 1: Analyze Estimate Net Profit
@@ -113,8 +112,50 @@ Extensions:
   - i. The system displays an error to notify the user that no data was found for this item.
   - ii. No data processing occurs and the Use Case exits early.
 
-### Use Case 4
-(Add additional use cases as needed.)
+### Use Case 4: Manage Buyer Wishlist
+Primary Actor: Buyer keeping track of items they may want to purchase.
+
+Preconditions:
+- The user is in the Buyer view of the application.
+- To add an item, the buyer has selected an item from the search results.
+
+Trigger: The buyer chooses to save an item, view their wishlist, or remove a saved item.
+
+Success Outcome: The buyer can add, view, and remove saved items. The wishlist remains available after the application is closed and reopened.
+
+Main Success Scenario:
+1. The buyer selects an item from the search results and clicks "Add to Wishlist".
+2. The system checks whether the item is already saved.
+3. The system saves the item's identifier, name, displayed price, currency, and eBay link to the wishlist.
+4. The system confirms that the item was saved.
+5. The buyer opens the Wishlist view.
+6. The system loads and displays the saved items.
+7. The buyer can select an item and click "Remove".
+8. The system saves the updated wishlist and refreshes the displayed list.
+9. When the application is reopened, the buyer can view the previously saved wishlist.
+
+Extensions:
+
+- 2a. The item is already in the wishlist.
+  - i. The system informs the buyer that the item is already saved.
+  - ii. No duplicate entry is added.
+
+- 3a. Required item information is missing.
+  - i. The system asks the buyer to select a valid item.
+  - ii. No incomplete entry is saved.
+
+- 3b/8a. The wishlist cannot be saved.
+  - i. The system displays an error and does not report the change as successful.
+  - ii. The previous wishlist is retained so the buyer can retry.
+
+- 6a. The wishlist is empty.
+  - i. The system displays "Your wishlist is empty".
+
+- 6b. Previously saved data cannot be loaded.
+  - i. The system displays an error without overwriting the saved data.
+  - ii. The buyer can retry loading the wishlist.
+
+Scope: This use case uses item information already retrieved by the item-search feature. It stores the price shown when the item was saved; it does not refresh prices, analyze market data, or make purchases.
 ---
 ## Minimal Viable Product (MVP)
 | Team Member | MVP Use Case |
@@ -122,7 +163,7 @@ Extensions:
 | Harry Jia | Analyze Estimate Net Profit |
 | Reyna | Generate Selling Priority Recommendations |
 | Mahd | Get item pricing data |
-| Name | Use Case |
+| Jiayou Zhu | Manage Buyer Wishlist |
 ---
 ## Entities
 ### Entity 1
@@ -164,6 +205,73 @@ participant Analysis as Profit Analysis
 #### Selling Priority Recommendations
 
 ![Selling Priority Sequence Diagram](docs/diagrams/selling-priority-sequence.png)
+
+#### Manage Buyer Wishlist
+```mermaid
+sequenceDiagram
+    actor Buyer
+    participant View as Buyer / Wishlist View
+    participant Controller as Wishlist Controller
+    participant Interactor as Wishlist Interactor
+    participant Store as Wishlist Data Access
+    participant File as Local JSON File
+    participant Presenter as Wishlist Presenter
+    participant Model as Wishlist ViewModel
+
+    Note over View,Interactor: Selected item data comes from the existing search feature
+    Buyer->>View: Select item and click Add to Wishlist
+    View->>Controller: Add selected item
+    Controller->>Interactor: Add item request
+    Interactor->>Store: Load saved items
+    Store->>File: Read JSON
+    File-->>Store: Saved items
+    Store-->>Interactor: Current wishlist
+    Interactor->>Interactor: Validate item and check for duplicates
+    alt Item is already saved
+        Interactor->>Presenter: Present duplicate message
+    else Item can be added
+        Interactor->>Store: Save updated wishlist
+        Store->>File: Write JSON
+        File-->>Store: Save result
+        Store-->>Interactor: Save result
+        alt Save succeeds
+            Interactor->>Presenter: Present updated wishlist
+        else Save fails
+            Interactor->>Presenter: Present error without confirming addition
+        end
+    end
+    Presenter->>Model: Update displayed state
+    Model-->>View: Notify state change
+    View-->>Buyer: Show result
+
+    opt View saved items, including after reopening
+        Buyer->>View: Open Wishlist
+        View->>Controller: Request saved items
+        Controller->>Interactor: View wishlist request
+        Interactor->>Store: Load saved items
+        Store->>File: Read JSON
+        File-->>Store: Saved data or load error
+        Store-->>Interactor: Saved items or load error
+        Interactor->>Presenter: Present items, empty state, or error
+        Presenter->>Model: Update displayed state
+        Model-->>View: Notify state change
+        View-->>Buyer: Display result
+    end
+
+    opt Remove a saved item
+        Buyer->>View: Select saved item and click Remove
+        View->>Controller: Remove selected item
+        Controller->>Interactor: Remove item request
+        Interactor->>Store: Save wishlist without selected item
+        Store->>File: Write JSON
+        File-->>Store: Save result
+        Store-->>Interactor: Save result
+        Interactor->>Presenter: Present updated list or save error
+        Presenter->>Model: Update displayed state
+        Model-->>View: Notify state change
+        View-->>Buyer: Display result
+    end
+```
 ---
 ## How to Run
 [Instructions for running the program.]
