@@ -121,7 +121,7 @@ Extensions:
 |-------------|--------------|
 | Name | Use Case |
 | Reyna | Generate Selling Priority Recommendations |
-| Name | Use Case |
+| Mahd | Get item pricing data |
 | Name | Use Case |
 ---
 ## Entities
