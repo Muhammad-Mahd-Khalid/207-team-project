@@ -278,3 +278,7 @@ sequenceDiagram
 ---
 ## Notes
 [Any additional project information.]
+
+## Buyer Wishlist implementation
+
+See [Wishlist behavior, integration and testing](docs/Dev/BuyerWishlist.md).
