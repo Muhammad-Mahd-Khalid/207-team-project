@@ -43,6 +43,6 @@ public class APIDataAccessObject implements ItemPricingDataAccessInterface{
     }
 
     public ArrayList<Item> getItemsForSearchTerm(String searchTerm){
-    this.ApplicationAccessToken.get().getToken();
+        throw new UnsupportedOperationException("eBay item search is not implemented yet.");
     }
 }
