@@ -7,26 +7,8 @@ import java.util.List;
 public class UserProfile {
 
     public enum UserRole {
-    BUYER,
-    SELLER
-}
-
-    public static class WishlistEntry {
-        private final Item item;
-        private final String listingLink;
-
-        public WishlistEntry(Item item, String listingLink) {
-            this.item = item;
-            this.listingLink = listingLink;
-        }
-
-        public Item getItem() {
-            return item;
-        }
-
-        public String getListingLink() {
-            return listingLink;
-        }
+        BUYER,
+        SELLER
     }
 
     private final UserRole role;
@@ -45,4 +27,3 @@ public class UserProfile {
         return Collections.unmodifiableList(new ArrayList<>(wishlist));
     }
 }
-
