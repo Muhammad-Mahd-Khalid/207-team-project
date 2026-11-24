@@ -1,4 +1,3 @@
 package DataAccess;
 
-public interface APIDataAccesInterface {
-}
+public interface APIDataAccesInterface {}

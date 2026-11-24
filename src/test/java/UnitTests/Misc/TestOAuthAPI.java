@@ -1,23 +1,20 @@
 package UnitTests.Misc;
-import DataAccess.APIDataAccessObject;
-import org.junit.Test;
-
-import java.io.IOException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import DataAccess.APIDataAccessObject;
+import java.io.IOException;
+import org.junit.Test;
+
 public class TestOAuthAPI {
 
-    @Test
-    public void OAuthAppTokenTest() {
-        APIDataAccessObject testAccess = null;
-        try {
-            testAccess = new APIDataAccessObject("src/main/resources/ebay-config-default.yaml");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-
-
+  @Test
+  public void OAuthAppTokenTest() {
+    APIDataAccessObject testAccess = null;
+    try {
+      testAccess = new APIDataAccessObject("src/main/resources/ebay-config-default.yaml");
+    } catch (IOException e) {
+      e.printStackTrace();
     }
+  }
 }
