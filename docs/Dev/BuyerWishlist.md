@@ -17,7 +17,8 @@ BuyerWishlistPanel wishlist = BuyerWishlistFactory.create(Path.of("data", "buyer
 wishlist.setSelectedItem(selectedItem, itemWebUrl);
 ```
 
-Pass the URL from the search result with the selected item. Call
+Pass the listing URL (eBay's `itemWebUrl`) with the selected item. The current
+search data access returns `Item` objects without that URL. Call
 `setSelectedItem(null, null)` to clear the selection and `refreshWishlist()` when
 opening the wishlist tab.
 

@@ -1,9 +1,16 @@
 package Views.Buyers.BuyerWishlist;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import DataAccess.JsonBuyerWishlistDataAccessObject;
 import Entities.Item;
 import Entities.WishlistEntry;
-import InterfaceAdapters.Buyers.BuyerWishlist.*;
+import InterfaceAdapters.Buyers.BuyerWishlist.BuyerWishlistController;
+import InterfaceAdapters.Buyers.BuyerWishlist.BuyerWishlistPresenter;
+import InterfaceAdapters.Buyers.BuyerWishlist.BuyerWishlistViewModel;
 import UseCases.Buyers.BuyerWishlist.BuyerWishlistInteractor;
 import java.awt.Component;
 import java.awt.Container;
@@ -14,100 +21,122 @@ import java.util.concurrent.atomic.AtomicReference;
 import javax.swing.JButton;
 import javax.swing.JTable;
 import javax.swing.SwingUtilities;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import static org.junit.Assert.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
-public class BuyerWishlistPanelTest {
-    @Rule public TemporaryFolder temporary = new TemporaryFolder();
+class BuyerWishlistPanelTest {
+  @TempDir Path temporary;
 
-    @Test public void buttonsAddDisplayAndRemoveThroughRealStorage() throws Exception {
-        Path file = temporary.getRoot().toPath().resolve("wishlist.json");
-        BuyerWishlistViewModel model = new BuyerWishlistViewModel();
-        BuyerWishlistController controller = new BuyerWishlistController(new BuyerWishlistInteractor(
+  @Test
+  void buttonsAddDisplayAndRemoveThroughRealStorage() throws Exception {
+    Path file = temporary.resolve("wishlist.json");
+    BuyerWishlistViewModel model = new BuyerWishlistViewModel();
+    BuyerWishlistController controller =
+        new BuyerWishlistController(
+            new BuyerWishlistInteractor(
                 new JsonBuyerWishlistDataAccessObject(file), new BuyerWishlistPresenter(model)));
-        AtomicReference<BuyerWishlistPanel> ref = new AtomicReference<>();
-        SwingUtilities.invokeAndWait(() -> ref.set(new BuyerWishlistPanel(controller, model)));
-        BuyerWishlistPanel panel = ref.get();
-        JButton add = findButton(panel, "Add to Wishlist");
-        JButton remove = findButton(panel, "Remove selected item");
-        JTable table = findTable(panel);
-        SwingUtilities.invokeAndWait(() -> {
-            assertFalse(add.isEnabled());
-            assertFalse(remove.isEnabled());
-            panel.setSelectedItem(new Item("123", "Camera", 99.95,
-                    "CAD", "Used", "Cameras"), "https://www.ebay.ca/itm/123");
-            assertTrue(add.isEnabled());
+    AtomicReference<BuyerWishlistPanel> ref = new AtomicReference<>();
+    SwingUtilities.invokeAndWait(() -> ref.set(new BuyerWishlistPanel(controller, model)));
+    BuyerWishlistPanel panel = ref.get();
+    JButton add = findButton(panel, "Add to Wishlist");
+    JButton remove = findButton(panel, "Remove selected item");
+    JTable table = findTable(panel);
+    SwingUtilities.invokeAndWait(
+        () -> {
+          assertFalse(add.isEnabled());
+          assertFalse(remove.isEnabled());
+          panel.setSelectedItem(
+              new Item("123", "Camera", 99.95, "CAD", "Used", "Cameras"),
+              "https://www.ebay.ca/itm/123");
+          assertTrue(add.isEnabled());
         });
-        awaitAction(model, add::doClick);
-        SwingUtilities.invokeAndWait(() -> {
-            assertEquals(1, table.getRowCount());
-            assertEquals("Camera", table.getValueAt(0, 0));
-            assertEquals("99.95", table.getValueAt(0, 1));
-            table.setRowSelectionInterval(0, 0);
+    awaitAction(model, add::doClick);
+    SwingUtilities.invokeAndWait(
+        () -> {
+          assertEquals(1, table.getRowCount());
+          assertEquals("Camera", table.getValueAt(0, 0));
+          assertEquals("99.95", table.getValueAt(0, 1));
+          table.setRowSelectionInterval(0, 0);
         });
-        awaitEnabled(remove);
-        awaitAction(model, remove::doClick);
-        SwingUtilities.invokeAndWait(() -> assertEquals(0, table.getRowCount()));
-        assertTrue(new JsonBuyerWishlistDataAccessObject(file).loadItems().isEmpty());
-    }
+    awaitEnabled(remove);
+    awaitAction(model, remove::doClick);
+    SwingUtilities.invokeAndWait(() -> assertEquals(0, table.getRowCount()));
+    assertTrue(new JsonBuyerWishlistDataAccessObject(file).loadItems().isEmpty());
+  }
 
-    @Test public void refreshDisplaysPreviouslySavedItems() throws Exception {
-        Path file = temporary.getRoot().toPath().resolve("wishlist.json");
-        new JsonBuyerWishlistDataAccessObject(file).saveItems(java.util.Collections.singletonList(
-                new WishlistEntry(new Item("book", "Book", 12.00, "CAD", null, null),
-                        "https://www.ebay.ca/itm/book")));
-        BuyerWishlistViewModel model = new BuyerWishlistViewModel();
-        BuyerWishlistController controller = new BuyerWishlistController(new BuyerWishlistInteractor(
+  @Test
+  void refreshDisplaysPreviouslySavedItems() throws Exception {
+    Path file = temporary.resolve("wishlist.json");
+    new JsonBuyerWishlistDataAccessObject(file)
+        .saveItems(
+            java.util.Collections.singletonList(
+                new WishlistEntry(
+                    new Item("book", "Book", 12.00, "CAD", null, null),
+                    "https://www.ebay.ca/itm/book")));
+    BuyerWishlistViewModel model = new BuyerWishlistViewModel();
+    BuyerWishlistController controller =
+        new BuyerWishlistController(
+            new BuyerWishlistInteractor(
                 new JsonBuyerWishlistDataAccessObject(file), new BuyerWishlistPresenter(model)));
-        AtomicReference<BuyerWishlistPanel> panel = new AtomicReference<>();
-        SwingUtilities.invokeAndWait(() -> panel.set(new BuyerWishlistPanel(controller, model)));
-        awaitAction(model, panel.get()::refreshWishlist);
-        SwingUtilities.invokeAndWait(() -> {
-            JTable table = findTable(panel.get());
-            assertEquals("Book", table.getValueAt(0, 0));
-            assertEquals("12", table.getValueAt(0, 1));
+    AtomicReference<BuyerWishlistPanel> panel = new AtomicReference<>();
+    SwingUtilities.invokeAndWait(() -> panel.set(new BuyerWishlistPanel(controller, model)));
+    awaitAction(model, panel.get()::refreshWishlist);
+    SwingUtilities.invokeAndWait(
+        () -> {
+          JTable table = findTable(panel.get());
+          assertEquals("Book", table.getValueAt(0, 0));
+          assertEquals("12", table.getValueAt(0, 1));
         });
-    }
+  }
 
-    private void awaitAction(BuyerWishlistViewModel model, Runnable action) throws Exception {
-        CountDownLatch changed = new CountDownLatch(1);
-        model.addPropertyChangeListener(event -> changed.countDown());
-        SwingUtilities.invokeAndWait(action);
-        assertTrue("Use case should complete", changed.await(5, TimeUnit.SECONDS));
-        SwingUtilities.invokeAndWait(() -> { });
+  private void awaitAction(BuyerWishlistViewModel model, Runnable action) throws Exception {
+    CountDownLatch changed = new CountDownLatch(1);
+    model.addPropertyChangeListener(event -> changed.countDown());
+    SwingUtilities.invokeAndWait(action);
+    assertTrue(changed.await(5, TimeUnit.SECONDS), "Use case should complete");
+    SwingUtilities.invokeAndWait(() -> {});
+  }
+
+  private void awaitEnabled(JButton button) throws Exception {
+    long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+    AtomicReference<Boolean> enabled = new AtomicReference<>(false);
+    while (System.nanoTime() < deadline) {
+      SwingUtilities.invokeAndWait(() -> enabled.set(button.isEnabled()));
+      if (enabled.get()) {
+        return;
+      }
+      Thread.sleep(10);
     }
-    private void awaitEnabled(JButton button) throws Exception {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
-        AtomicReference<Boolean> enabled = new AtomicReference<>(false);
-        while (System.nanoTime() < deadline) {
-            SwingUtilities.invokeAndWait(() -> enabled.set(button.isEnabled()));
-            if (enabled.get()) { return; }
-            Thread.sleep(10);
+    fail("Button should become enabled after action");
+  }
+
+  private JButton findButton(Container parent, String text) {
+    for (Component component : parent.getComponents()) {
+      if (component instanceof JButton && ((JButton) component).getText().equals(text)) {
+        return (JButton) component;
+      }
+      if (component instanceof Container) {
+        JButton found = findButton((Container) component, text);
+        if (found != null) {
+          return found;
         }
-        fail("Button should become enabled after action");
+      }
     }
-    private JButton findButton(Container parent, String text) {
-        for (Component component : parent.getComponents()) {
-            if (component instanceof JButton && ((JButton) component).getText().equals(text)) {
-                return (JButton) component;
-            }
-            if (component instanceof Container) {
-                JButton found = findButton((Container) component, text);
-                if (found != null) { return found; }
-            }
+    return null;
+  }
+
+  private JTable findTable(Container parent) {
+    for (Component component : parent.getComponents()) {
+      if (component instanceof JTable) {
+        return (JTable) component;
+      }
+      if (component instanceof Container) {
+        JTable found = findTable((Container) component);
+        if (found != null) {
+          return found;
         }
-        return null;
+      }
     }
-    private JTable findTable(Container parent) {
-        for (Component component : parent.getComponents()) {
-            if (component instanceof JTable) { return (JTable) component; }
-            if (component instanceof Container) {
-                JTable found = findTable((Container) component);
-                if (found != null) { return found; }
-            }
-        }
-        return null;
-    }
+    return null;
+  }
 }

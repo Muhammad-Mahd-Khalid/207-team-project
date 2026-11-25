@@ -6,6 +6,9 @@ import java.util.List;
 
 /** A failed save must leave the previously saved wishlist intact. */
 public interface BuyerWishlistDataAccessInterface {
-    List<WishlistEntry> loadItems() throws IOException;
-    void saveItems(List<WishlistEntry> items) throws IOException;
+  /** Returns the saved items in display order. */
+  List<WishlistEntry> loadItems() throws IOException;
+
+  /** Replaces the saved list with the supplied items. */
+  void saveItems(List<WishlistEntry> items) throws IOException;
 }

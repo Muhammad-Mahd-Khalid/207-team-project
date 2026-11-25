@@ -1,4 +1,4 @@
 package DataAccess;
 
-public interface APIDataAccesInterface {
-}
+/** Interface Placeholder. */
+public interface APIDataAccesInterface {}
