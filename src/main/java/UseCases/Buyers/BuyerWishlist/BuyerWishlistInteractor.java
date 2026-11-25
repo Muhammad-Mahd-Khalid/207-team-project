@@ -1,14 +1,14 @@
 package UseCases.Buyers.BuyerWishlist;
 
-import Entities.Item;
-import Entities.UserProfile;
+import Entities.WishlistEntry;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 public class BuyerWishlistInteractor implements BuyerWishlistInputBoundary {
     private final BuyerWishlistDataAccessInterface store;
     private final BuyerWishlistOutputBoundary presenter;
-    private UserProfile profile = new UserProfile(Collections.emptyList());
+    private List<WishlistEntry> wishlist = List.of();
 
     public BuyerWishlistInteractor(BuyerWishlistDataAccessInterface store,
                                    BuyerWishlistOutputBoundary presenter) {
@@ -19,23 +19,28 @@ public class BuyerWishlistInteractor implements BuyerWishlistInputBoundary {
     @Override
     public void viewWishlist() {
         if (load()) {
-            present(profile.getWishlist().isEmpty() ? "Your wishlist is empty" : "Wishlist loaded.", true);
+            present(wishlist.isEmpty() ? "Your wishlist is empty" : "Wishlist loaded.", true);
         }
     }
 
     @Override
-    public void addItem(Item item) {
-        if (!ItemValidation.isValidItem(item)) {
+    public void addItem(WishlistEntry selection) {
+        if (selection == null || !selection.isValid()) {
             present("Please select a valid item with a name, price, currency and eBay link.", false);
             return;
         }
-        if (!load()) { return; }
-        if (profile.containsItem(item.getId())) {
-            present("This item is already saved.", false);
+        if (!load()) {
             return;
         }
-        UserProfile updated = new UserProfile(profile.getWishlist());
-        updated.addItem(item);
+        String id = selection.getItem().getItemId();
+        for (WishlistEntry entry : wishlist) {
+            if (entry.getItem().getItemId().equals(id)) {
+                present("This item is already saved.", false);
+                return;
+            }
+        }
+        List<WishlistEntry> updated = new ArrayList<>(wishlist);
+        updated.add(selection);
         save(updated, "Item saved to wishlist.");
     }
 
@@ -45,9 +50,11 @@ public class BuyerWishlistInteractor implements BuyerWishlistInputBoundary {
             present("Please select a saved item to remove.", false);
             return;
         }
-        if (!load()) { return; }
-        UserProfile updated = new UserProfile(profile.getWishlist());
-        if (!updated.removeItem(id)) {
+        if (!load()) {
+            return;
+        }
+        List<WishlistEntry> updated = new ArrayList<>(wishlist);
+        if (!updated.removeIf(entry -> entry.getItem().getItemId().equals(id))) {
             present("This item is not in your wishlist.", false);
             return;
         }
@@ -56,7 +63,7 @@ public class BuyerWishlistInteractor implements BuyerWishlistInputBoundary {
 
     private boolean load() {
         try {
-            profile = new UserProfile(store.loadItems());
+            wishlist = store.loadItems();
             return true;
         } catch (IOException ex) {
             present("Could not load your wishlist. Saved data has not been changed. Please retry.", false);
@@ -64,10 +71,10 @@ public class BuyerWishlistInteractor implements BuyerWishlistInputBoundary {
         }
     }
 
-    private void save(UserProfile updated, String message) {
+    private void save(List<WishlistEntry> updated, String message) {
         try {
-            store.saveItems(updated.getWishlist());
-            profile = updated;
+            store.saveItems(updated);
+            wishlist = updated;
             present(message, true);
         } catch (IOException ex) {
             present("Could not save your wishlist. Your previous wishlist has been kept. Please retry.", false);
@@ -75,7 +82,7 @@ public class BuyerWishlistInteractor implements BuyerWishlistInputBoundary {
     }
 
     private void present(String message, boolean success) {
-        presenter.present(new BuyerWishlistOutputData(profile.getWishlist(), message, success));
+        presenter.present(new BuyerWishlistOutputData(wishlist, message, success));
     }
 
 }

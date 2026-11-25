@@ -1,10 +1,11 @@
 package DataAccess;
 
 import Entities.Item;
+import Entities.UserProfile;
+import Entities.WishlistEntry;
 import InterfaceAdapters.Buyers.BuyerWishlist.*;
 import UseCases.Buyers.BuyerWishlist.BuyerWishlistInteractor;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -17,21 +18,38 @@ import static org.junit.Assert.*;
 public class JsonBuyerWishlistDataAccessObjectTest {
     @Rule public TemporaryFolder temporary = new TemporaryFolder();
     private Path file() { return temporary.getRoot().toPath().resolve("profile/wishlist.json"); }
-    private Item item() {
-        return new Item("v1|123|0", "Camera \"special\" 中文", new BigDecimal("123.4500"),
-                "CAD", "https://www.ebay.ca/itm/123");
+    private WishlistEntry item() {
+        return new WishlistEntry(new Item("v1|123|0", "Camera \"special\" 中文", 123.45,
+                "CAD", "Used", "Cameras"), "https://www.ebay.ca/itm/123");
     }
     @Test public void missingFileMeansEmptyWishlist() throws Exception {
         assertTrue(new JsonBuyerWishlistDataAccessObject(file()).loadItems().isEmpty());
     }
-    @Test public void savesAndReopensEveryFieldWithoutLosingDecimalPrecision() throws Exception {
-        new JsonBuyerWishlistDataAccessObject(file()).saveItems(Collections.singletonList(item()));
-        Item loaded = new JsonBuyerWishlistDataAccessObject(file()).loadItems().get(0);
-        assertEquals(item().getId(), loaded.getId());
-        assertEquals(item().getName(), loaded.getName());
-        assertEquals(item().getPrice(), loaded.getPrice());
-        assertEquals(item().getCurrency(), loaded.getCurrency());
-        assertEquals(item().getEbayUrl(), loaded.getEbayUrl());
+    @Test public void savesAndReopensEveryField() throws Exception {
+        UserProfile profile = new UserProfile(UserProfile.UserRole.BUYER, Collections.singletonList(item()));
+        new JsonBuyerWishlistDataAccessObject(file()).saveItems(profile.getWishlist());
+
+        UserProfile reopened = new UserProfile(UserProfile.UserRole.BUYER,
+                new JsonBuyerWishlistDataAccessObject(file()).loadItems());
+        WishlistEntry entry = reopened.getWishlist().get(0);
+        Item loaded = entry.getItem();
+        Item original = item().getItem();
+        assertEquals(original.getItemId(), loaded.getItemId());
+        assertEquals(original.getTitle(), loaded.getTitle());
+        assertEquals(original.getPrice(), loaded.getPrice(), 0.0);
+        assertEquals(original.getCurrency(), loaded.getCurrency());
+        assertEquals(original.getCondition(), loaded.getCondition());
+        assertEquals(original.getCategory(), loaded.getCategory());
+        assertEquals(item().getListingLink(), entry.getListingLink());
+    }
+    @Test public void readsExistingFilesWithoutConditionOrCategory() throws Exception {
+        Files.createDirectories(file().getParent());
+        Files.writeString(file(), "[{\"id\":\"123\",\"name\":\"Camera\",\"price\":\"123.4500\","
+                + "\"currency\":\"CAD\",\"ebayUrl\":\"https://www.ebay.ca/itm/123\"}]");
+        WishlistEntry entry = new JsonBuyerWishlistDataAccessObject(file()).loadItems().get(0);
+        assertEquals("123", entry.getItem().getItemId());
+        assertEquals(123.45, entry.getItem().getPrice(), 0.0);
+        assertEquals("https://www.ebay.ca/itm/123", entry.getListingLink());
     }
     @Test public void persistsAnEmptyWishlistAfterRemovingLastItem() throws Exception {
         JsonBuyerWishlistDataAccessObject store = new JsonBuyerWishlistDataAccessObject(file());
@@ -78,10 +96,10 @@ public class JsonBuyerWishlistDataAccessObjectTest {
         BuyerWishlistViewModel reopened = new BuyerWishlistViewModel();
         BuyerWishlistController second = controller(reopened);
         second.viewWishlist();
-        assertEquals(item().getId(), reopened.getState().getItems().get(0).getId());
+        assertEquals(item().getItem().getItemId(), reopened.getState().getItems().get(0).getItem().getItemId());
         second.addItem(item());
         assertFalse(reopened.getState().isSuccess());
-        second.removeItem(item().getId());
+        second.removeItem(item().getItem().getItemId());
         assertTrue(reopened.getState().isSuccess());
         assertTrue(new JsonBuyerWishlistDataAccessObject(file()).loadItems().isEmpty());
     }

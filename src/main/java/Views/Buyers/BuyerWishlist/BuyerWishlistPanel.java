@@ -1,6 +1,8 @@
 package Views.Buyers.BuyerWishlist;
 
 import Entities.Item;
+import Entities.WishlistEntry;
+import java.math.BigDecimal;
 import InterfaceAdapters.Buyers.BuyerWishlist.BuyerWishlistController;
 import InterfaceAdapters.Buyers.BuyerWishlist.BuyerWishlistViewModel;
 import UseCases.Buyers.BuyerWishlist.BuyerWishlistOutputData;
@@ -31,7 +33,7 @@ public class BuyerWishlistPanel extends JPanel {
     private final JButton remove = new JButton("Remove selected item");
     private final JButton refresh = new JButton("Refresh wishlist");
     private final BuyerWishlistViewModel model;
-    private Item selectedItem;
+    private WishlistEntry selectedItem;
     private boolean busy;
 
     public BuyerWishlistPanel(BuyerWishlistController controller, BuyerWishlistViewModel model) {
@@ -50,13 +52,14 @@ public class BuyerWishlistPanel extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(message, BorderLayout.SOUTH);
         add.addActionListener(event -> {
-            Item item = selectedItem;
+            WishlistEntry item = selectedItem;
             runAction(() -> controller.addItem(item));
         });
         remove.addActionListener(event -> {
             int row = table.getSelectedRow();
             if (row >= 0) {
-                String id = model.getState().getItems().get(table.convertRowIndexToModel(row)).getId();
+                String id = model.getState().getItems().get(table.convertRowIndexToModel(row))
+                        .getItem().getItemId();
                 runAction(() -> controller.removeItem(id));
             }
         });
@@ -70,10 +73,10 @@ public class BuyerWishlistPanel extends JPanel {
         render(model.getState());
     }
 
-    public void setSelectedItem(Item selectedItem) {
-        this.selectedItem = selectedItem;
-        selection.setText(selectedItem == null ? "Select an item in the buyer search results."
-                : "Selected: " + selectedItem.getName());
+    public void setSelectedItem(Item item, String url) {
+        selectedItem = item == null ? null : new WishlistEntry(item, url);
+        selection.setText(item == null ? "Select an item in the buyer search results."
+                : "Selected: " + item.getTitle());
         updateButtons();
     }
 
@@ -99,9 +102,10 @@ public class BuyerWishlistPanel extends JPanel {
 
     private void render(BuyerWishlistOutputData state) {
         rows.setRowCount(0);
-        for (Item item : state.getItems()) {
-            rows.addRow(new Object[]{item.getName(), item.getPrice().toPlainString(),
-                    item.getCurrency(), item.getEbayUrl()});
+        for (WishlistEntry entry : state.getItems()) {
+            Item item = entry.getItem();
+            String price = BigDecimal.valueOf(item.getPrice()).stripTrailingZeros().toPlainString();
+            rows.addRow(new Object[]{item.getTitle(), price, item.getCurrency(), entry.getListingLink()});
         }
         message.setForeground(state.isSuccess() ? Color.BLACK : Color.RED);
         message.setText(state.getMessage().isEmpty() ? " " : state.getMessage());

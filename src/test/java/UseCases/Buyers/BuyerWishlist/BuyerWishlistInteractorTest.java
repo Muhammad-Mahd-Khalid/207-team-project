@@ -2,7 +2,7 @@ package UseCases.Buyers.BuyerWishlist;
 
 import Entities.Item;
 import java.io.IOException;
-import java.math.BigDecimal;
+import Entities.WishlistEntry;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -14,7 +14,7 @@ public class BuyerWishlistInteractorTest {
     private Store store;
     private BuyerWishlistInteractor interactor;
     private BuyerWishlistOutputData result;
-    private Item camera;
+    private WishlistEntry camera;
 
     @Before public void setUp() {
         store = new Store();
@@ -32,7 +32,7 @@ public class BuyerWishlistInteractorTest {
         assertTrue(result.isSuccess());
         assertEquals(1, store.saved.size());
         assertSame(camera, store.saved.get(0));
-        assertEquals(new BigDecimal("125.50"), result.getItems().get(0).getPrice());
+        assertEquals(125.50, result.getItems().get(0).getItem().getPrice(), 0.0);
     }
     @Test public void duplicateIdDoesNotReplaceOriginalPriceOrSaveAgain() {
         interactor.addItem(camera);
@@ -48,15 +48,16 @@ public class BuyerWishlistInteractorTest {
         assertEquals(2, result.getItems().size());
     }
     @Test public void rejectsMissingAndInvalidInformationWithoutWriting() {
-        List<Item> invalid = Arrays.asList(null,
+        Item listing = new Item("id", "Camera", 1, "CAD", "Used", "Cameras");
+        List<WishlistEntry> invalid = Arrays.asList(null,
                 item(" ", "Camera", "1"), item("id", "", "1"),
-                new Item("id", "Camera", null, "CAD", "https://www.ebay.ca/itm/1"),
+                item("id", "Camera", "NaN"), item("id", "Camera", "Infinity"),
                 item("id", "Camera", "-1"),
-                new Item("id", "Camera", BigDecimal.ONE, "", "https://www.ebay.ca/itm/1"),
-                new Item("id", "Camera", BigDecimal.ONE, "CAD", null),
-                new Item("id", "Camera", BigDecimal.ONE, "CAD", "javascript:alert(1)"),
-                new Item("id", "Camera", BigDecimal.ONE, "CAD", "bad url"));
-        for (Item item : invalid) {
+                new WishlistEntry(new Item("id", "Camera", 1, "", null, null), "https://www.ebay.ca/itm/1"),
+                new WishlistEntry(listing, null),
+                new WishlistEntry(listing, "javascript:alert(1)"),
+                new WishlistEntry(listing, "bad url"));
+        for (WishlistEntry item : invalid) {
             interactor.addItem(item);
             assertFalse(result.isSuccess());
         }
@@ -71,7 +72,7 @@ public class BuyerWishlistInteractorTest {
         interactor.addItem(item("other", "Book", "10"));
         interactor.removeItem("camera");
         assertTrue(result.isSuccess());
-        assertEquals("other", store.saved.get(0).getId());
+        assertEquals("other", store.saved.get(0).getItem().getItemId());
         assertEquals(1, store.saved.size());
     }
     @Test public void missingRemovalDoesNotWrite() {
@@ -123,19 +124,20 @@ public class BuyerWishlistInteractorTest {
         catch (UnsupportedOperationException expected) { }
         assertEquals(1, store.saved.size());
     }
-    private Item item(String id, String name, String price) {
-        return new Item(id, name, new BigDecimal(price), "CAD", "https://www.ebay.ca/itm/" + id);
+    private WishlistEntry item(String id, String name, String price) {
+        return new WishlistEntry(new Item(id, name, Double.parseDouble(price), "CAD", null, null),
+                "https://www.ebay.ca/itm/" + id);
     }
     private static class Store implements BuyerWishlistDataAccessInterface {
-        List<Item> saved = new ArrayList<>();
+        List<WishlistEntry> saved = new ArrayList<>();
         int saves;
         boolean failLoad;
         boolean failSave;
-        public List<Item> loadItems() throws IOException {
+        public List<WishlistEntry> loadItems() throws IOException {
             if (failLoad) { throw new IOException("load failed"); }
             return new ArrayList<>(saved);
         }
-        public void saveItems(List<Item> items) throws IOException {
+        public void saveItems(List<WishlistEntry> items) throws IOException {
             if (failSave) { throw new IOException("save failed"); }
             saved = new ArrayList<>(items);
             saves++;

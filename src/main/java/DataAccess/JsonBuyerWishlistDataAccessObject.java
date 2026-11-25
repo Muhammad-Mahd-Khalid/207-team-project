@@ -2,14 +2,13 @@ package DataAccess;
 
 import Entities.Item;
 import UseCases.Buyers.BuyerWishlist.BuyerWishlistDataAccessInterface;
-import UseCases.Buyers.BuyerWishlist.ItemValidation;
+import Entities.WishlistEntry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -28,24 +27,25 @@ public class JsonBuyerWishlistDataAccessObject implements BuyerWishlistDataAcces
     }
 
     @Override
-    public List<Item> loadItems() throws IOException {
+    public List<WishlistEntry> loadItems() throws IOException {
         if (Files.notExists(file)) { return new ArrayList<>(); }
         JsonNode root = mapper.readTree(file.toFile());
         if (root == null || !root.isArray()) { throw new IOException("Invalid wishlist file."); }
-        List<Item> items = new ArrayList<>();
+        List<WishlistEntry> items = new ArrayList<>();
         Set<String> ids = new HashSet<>();
         for (JsonNode row : root) {
-            Item item;
             try {
-                item = new Item(text(row, "id"), text(row, "name"),
-                        new BigDecimal(text(row, "price")), text(row, "currency"), text(row, "ebayUrl"));
-            } catch (IllegalArgumentException ex) {
-                throw new IOException("Invalid saved item.", ex);
+                Item item = new Item(text(row, "id"), text(row, "name"),
+                        Double.parseDouble(text(row, "price")), text(row, "currency"),
+                        row.path("condition").asText(null), row.path("category").asText(null));
+                WishlistEntry entry = new WishlistEntry(item, text(row, "ebayUrl"));
+                if (!entry.isValid() || !ids.add(item.getItemId())) {
+                    throw new IOException("Invalid or duplicate saved item.");
+                }
+                items.add(entry);
+            } catch (NumberFormatException ex) {
+                throw new IOException("Invalid saved price.", ex);
             }
-            if (!ItemValidation.isValidItem(item) || !ids.add(item.getId())) {
-                throw new IOException("Invalid or duplicate saved item.");
-            }
-            items.add(item);
         }
         return items;
     }
@@ -57,19 +57,22 @@ public class JsonBuyerWishlistDataAccessObject implements BuyerWishlistDataAcces
     }
 
     @Override
-    public void saveItems(List<Item> items) throws IOException {
+    public void saveItems(List<WishlistEntry> items) throws IOException {
         ArrayNode root = mapper.createArrayNode();
         Set<String> ids = new HashSet<>();
-        for (Item item : items) {
-            if (!ItemValidation.isValidItem(item) || !ids.add(item.getId())) {
+        for (WishlistEntry entry : items) {
+            if (!entry.isValid() || !ids.add(entry.getItem().getItemId())) {
                 throw new IOException("Cannot save invalid or duplicate items.");
             }
+            Item item = entry.getItem();
             ObjectNode row = root.addObject();
-            row.put("id", item.getId());
-            row.put("name", item.getName());
-            row.put("price", item.getPrice().toPlainString());
+            row.put("id", item.getItemId());
+            row.put("name", item.getTitle());
+            row.put("price", Double.toString(item.getPrice()));
             row.put("currency", item.getCurrency());
-            row.put("ebayUrl", item.getEbayUrl());
+            row.put("ebayUrl", entry.getListingLink());
+            row.put("condition", item.getCondition());
+            row.put("category", item.getCategory());
         }
         Files.createDirectories(file.getParent());
         Path temporary = Files.createTempFile(file.getParent(), "wishlist-", ".tmp");

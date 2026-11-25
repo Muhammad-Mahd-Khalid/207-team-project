@@ -2,11 +2,11 @@ package Views.Buyers.BuyerWishlist;
 
 import DataAccess.JsonBuyerWishlistDataAccessObject;
 import Entities.Item;
+import Entities.WishlistEntry;
 import InterfaceAdapters.Buyers.BuyerWishlist.*;
 import UseCases.Buyers.BuyerWishlist.BuyerWishlistInteractor;
 import java.awt.Component;
 import java.awt.Container;
-import java.math.BigDecimal;
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -36,8 +36,8 @@ public class BuyerWishlistPanelTest {
         SwingUtilities.invokeAndWait(() -> {
             assertFalse(add.isEnabled());
             assertFalse(remove.isEnabled());
-            panel.setSelectedItem(new Item("123", "Camera", new BigDecimal("99.95"),
-                    "CAD", "https://www.ebay.ca/itm/123"));
+            panel.setSelectedItem(new Item("123", "Camera", 99.95,
+                    "CAD", "Used", "Cameras"), "https://www.ebay.ca/itm/123");
             assertTrue(add.isEnabled());
         });
         awaitAction(model, add::doClick);
@@ -56,7 +56,8 @@ public class BuyerWishlistPanelTest {
     @Test public void refreshDisplaysPreviouslySavedItems() throws Exception {
         Path file = temporary.getRoot().toPath().resolve("wishlist.json");
         new JsonBuyerWishlistDataAccessObject(file).saveItems(java.util.Collections.singletonList(
-                new Item("book", "Book", new BigDecimal("12.00"), "CAD", "https://www.ebay.ca/itm/book")));
+                new WishlistEntry(new Item("book", "Book", 12.00, "CAD", null, null),
+                        "https://www.ebay.ca/itm/book")));
         BuyerWishlistViewModel model = new BuyerWishlistViewModel();
         BuyerWishlistController controller = new BuyerWishlistController(new BuyerWishlistInteractor(
                 new JsonBuyerWishlistDataAccessObject(file), new BuyerWishlistPresenter(model)));
@@ -66,7 +67,7 @@ public class BuyerWishlistPanelTest {
         SwingUtilities.invokeAndWait(() -> {
             JTable table = findTable(panel.get());
             assertEquals("Book", table.getValueAt(0, 0));
-            assertEquals("12.00", table.getValueAt(0, 1));
+            assertEquals("12", table.getValueAt(0, 1));
         });
     }
 

@@ -1,9 +1,9 @@
 package UseCases.Buyers.BuyerWishlist;
 
-import Entities.Item;
+import Entities.WishlistEntry;
 
 public interface BuyerWishlistInputBoundary {
-    void addItem(Item selectedItem);
+    void addItem(WishlistEntry selection);
     void removeItem(String itemId);
     void viewWishlist();
 }
