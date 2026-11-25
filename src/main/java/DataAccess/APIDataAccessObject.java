@@ -2,7 +2,8 @@ package DataAccess;
 
 import Entities.Item;
 import UseCases.Buyers.ItemPricing.ItemPricingDataAccessInterface;
-import com.ebay.api.client.auth.oauth2.*;
+import com.ebay.api.client.auth.oauth2.CredentialUtil;
+import com.ebay.api.client.auth.oauth2.OAuth2Api;
 import com.ebay.api.client.auth.oauth2.model.AccessToken;
 import com.ebay.api.client.auth.oauth2.model.Environment;
 import com.ebay.api.client.auth.oauth2.model.OAuthResponse;
@@ -11,12 +12,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
+/** Main API Data Access Object. Handles eBay OAuth on construct */
 public class APIDataAccessObject implements ItemPricingDataAccessInterface {
   private final String SCOPE_PRODUCTION = "https://api.ebay.com/oauth/api_scope";
   private final String BASE_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
@@ -50,6 +55,7 @@ public class APIDataAccessObject implements ItemPricingDataAccessInterface {
     }
   }
 
+  /** Searches the eBay API and returns an ArrayList of Item Entities matching the search term. */
   public ArrayList<Item> getItemsForSearchTerm(String searchTerm) throws IOException {
     // 1. Fail fast if the token is missing
     if (this.ApplicationAccessToken.isEmpty()) {

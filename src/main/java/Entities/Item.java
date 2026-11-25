@@ -1,5 +1,6 @@
 package Entities;
 
+/** Represents an item listed by the eBay Browse API. */
 public class Item {
   private final String itemId;
   private final String title;
@@ -8,6 +9,7 @@ public class Item {
   private final String condition;
   private final String category;
 
+  /** Construct an item, given all of its fields as an input. */
   public Item(
       String itemId,
       String title,
