@@ -12,13 +12,13 @@ public class Item {
 
   /** Construct an item, given all of its fields as an input. */
   public Item(
-          String itemId,
-          String title,
-          double price,
-          String currency,
-          String condition,
-          String category,
-          Double sellerFeedbackPercent) {
+      String itemId,
+      String title,
+      double price,
+      String currency,
+      String condition,
+      String category,
+      Double sellerFeedbackPercent) {
     this.itemId = itemId;
     this.title = title;
     this.price = price;
