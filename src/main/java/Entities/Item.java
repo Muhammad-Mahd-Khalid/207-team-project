@@ -1,23 +1,24 @@
 package Entities;
 
 /** Represents an item listed by the eBay Browse API. */
-private final String itemId;
-private final String title;
-private final double price;
-private final String currency;
-private final String condition;
-private final String category;
-private final Double sellerFeedbackPercent;
+public class Item {
+  private final String itemId;
+  private final String title;
+  private final double price;
+  private final String currency;
+  private final String condition;
+  private final String category;
+  private final Double sellerFeedbackPercent;
 
   /** Construct an item, given all of its fields as an input. */
   public Item(
-      String itemId,
-      String title,
-      double price,
-      String currency,
-      String condition,
-      String category,
-      Double sellerFeedbackPercent) {
+          String itemId,
+          String title,
+          double price,
+          String currency,
+          String condition,
+          String category,
+          Double sellerFeedbackPercent) {
     this.itemId = itemId;
     this.title = title;
     this.price = price;
