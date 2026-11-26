@@ -1,14 +1,13 @@
 package Entities;
 
 /** Represents an item listed by the eBay Browse API. */
-public class Item {
-  private final String itemId;
-  private final String title;
-  private final double price;
-  private final String currency;
-  private final String condition;
-  private final String category;
-  private final Double sellerFeedbackPercent;
+private final String itemId;
+private final String title;
+private final double price;
+private final String currency;
+private final String condition;
+private final String category;
+private final Double sellerFeedbackPercent;
 
   /** Construct an item, given all of its fields as an input. */
   public Item(
