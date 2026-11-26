@@ -2,6 +2,7 @@ package DataAccess;
 
 import Entities.Item;
 import UseCases.Buyers.ItemPricing.ItemPricingDataAccessInterface;
+import UseCases.Sellers.EstimateNetProfit.EstimateNetProfitDataAccessInterface;
 import com.ebay.api.client.auth.oauth2.CredentialUtil;
 import com.ebay.api.client.auth.oauth2.OAuth2Api;
 import com.ebay.api.client.auth.oauth2.model.AccessToken;
@@ -22,7 +23,8 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 /** Main API Data Access Object. Handles eBay OAuth on construct */
-public class APIDataAccessObject implements ItemPricingDataAccessInterface {
+public class APIDataAccessObject
+    implements ItemPricingDataAccessInterface, EstimateNetProfitDataAccessInterface {
   private final String SCOPE_PRODUCTION = "https://api.ebay.com/oauth/api_scope";
   private final String BASE_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
 
