@@ -1,4 +1,4 @@
 package UseCases.Sellers.SellingPriority;
 
-public class SellingPriorityOutputData {
-}
+/** Stores the output information for the Selling Priority use case. */
+public class SellingPriorityOutputData {}

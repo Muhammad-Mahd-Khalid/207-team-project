@@ -25,22 +25,27 @@ public class SellingPriorityItemInputData {
     this.preparationTime = preparationTime;
   }
 
+  /** Returns the name of the item. */
   public String getItemName() {
     return itemName;
   }
 
+  /** Returns the condition of the item. */
   public String getCondition() {
     return condition;
   }
 
+  /** Returns the category of the item. */
   public String getCategory() {
     return category;
   }
 
+  /** Returns the ideal price of the item. */
   public BigDecimal getIdealPrice() {
     return idealPrice;
   }
 
+  /** Returns the preparation time of the item. */
   public int getPreparationTime() {
     return preparationTime;
   }

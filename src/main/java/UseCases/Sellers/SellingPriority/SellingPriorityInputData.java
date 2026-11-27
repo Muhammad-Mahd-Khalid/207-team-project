@@ -16,6 +16,7 @@ public class SellingPriorityInputData {
     this.items = Collections.unmodifiableList(new ArrayList<>(items));
   }
 
+  /** Returns the items in this batch. */
   public List<SellingPriorityItemInputData> getItems() {
     return items;
   }

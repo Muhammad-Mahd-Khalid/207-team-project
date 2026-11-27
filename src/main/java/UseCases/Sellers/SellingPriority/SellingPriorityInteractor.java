@@ -1,4 +1,4 @@
 package UseCases.Sellers.SellingPriority;
 
-public class SellingPriorityInteractor {
-}
+/** Interactor for the Selling Priority use case. */
+public class SellingPriorityInteractor {}
