@@ -8,6 +8,7 @@ public class Item {
   private final String currency;
   private final String condition;
   private final String category;
+  private final Double sellerFeedbackPercent;
 
   /** Construct an item, given all of its fields as an input. */
   public Item(
@@ -16,13 +17,15 @@ public class Item {
       double price,
       String currency,
       String condition,
-      String category) {
+      String category,
+      Double sellerFeedbackPercent) {
     this.itemId = itemId;
     this.title = title;
     this.price = price;
     this.currency = currency;
     this.condition = condition;
     this.category = category;
+    this.sellerFeedbackPercent = sellerFeedbackPercent;
   }
 
   public String getItemId() {
@@ -47,5 +50,9 @@ public class Item {
 
   public String getCategory() {
     return category;
+  }
+
+  public Double getSellerFeedbackPercent() {
+    return sellerFeedbackPercent;
   }
 }
