@@ -29,8 +29,8 @@ Success Outcome: The system retrieves relevant market data, calculates estimated
 
 Main Success Scenario:
 1. The seller enters a product name or keywords.
-2. The system retrieves relevant product and historical market pricing data.
-3. The system displays available market information, including historical prices and sales data.
+2. The system retrieves relevant product and current market pricing data.
+3. The system displays available market information, including current listing prices and market pricing statistics.
 4. The seller enters their target selling price.
 5. The seller enters estimated shipping and packaging costs.
 6. The system calculates applicable eBay fees and total selling costs.
