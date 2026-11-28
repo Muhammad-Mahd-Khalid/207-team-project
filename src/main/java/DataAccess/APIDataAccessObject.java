@@ -1,6 +1,7 @@
 package DataAccess;
 
 import Entities.Item;
+import Entities.ItemFactory;
 import UseCases.Buyers.ItemPricing.ItemPricingDataAccessInterface;
 import UseCases.Sellers.EstimateNetProfit.EstimateNetProfitDataAccessInterface;
 import com.ebay.api.client.auth.oauth2.CredentialUtil;
@@ -8,12 +9,11 @@ import com.ebay.api.client.auth.oauth2.OAuth2Api;
 import com.ebay.api.client.auth.oauth2.model.AccessToken;
 import com.ebay.api.client.auth.oauth2.model.Environment;
 import com.ebay.api.client.auth.oauth2.model.OAuthResponse;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -21,16 +21,23 @@ import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /** Main API Data Access Object. Handles eBay OAuth on construct */
 public class APIDataAccessObject
     implements ItemPricingDataAccessInterface, EstimateNetProfitDataAccessInterface {
   private final String SCOPE_PRODUCTION = "https://api.ebay.com/oauth/api_scope";
-  private final String BASE_URL = "https://api.ebay.com/buy/browse/v1/item_summary/search";
+  private final String BASE_URL_OAUTH = "https://api.ebay.com/buy/browse/v1/item_summary/search";
+  private String baseUrlApi = "https://api.ebay.com";
+  private static final String MARKETPLACE = "EBAY_US";
+  private static final int PAGE_SIZE = 200; // Pagination constant for browse API. Max 200.
+  private final ItemFactory itemFactory = new ItemFactory();
 
   private final String APIConfigFile;
-  private final Optional<AccessToken> ApplicationAccessToken;
-  private final OkHttpClient client = new OkHttpClient();
+  private Optional<AccessToken> ApplicationAccessToken;
+  private OkHttpClient client = new OkHttpClient();
 
   /** Reads the supplied Config File containing API information and stores the API Token. */
   public APIDataAccessObject(String APIConfigFile) throws IOException {
@@ -57,81 +64,106 @@ public class APIDataAccessObject
     }
   }
 
-  /** Searches the eBay API and returns an ArrayList of Item Entities matching the search term. */
-  public ArrayList<Item> getItemsForSearchTerm(String searchTerm) throws IOException {
-    // 1. Fail fast if the token is missing
-    if (this.ApplicationAccessToken.isEmpty()) {
-      throw new IllegalStateException(
-          "No application access token available. "
-              + "Check your eBay config file and OAuth credentials.");
+  /**
+   * Searches the eBay API and returns an ArrayList of Item Entities matching the search term.
+   * Returns an empty list if no items are found.
+   */
+  @Override
+  public List<Item> getItemsForSearchTerm(String searchTerm) throws IOException {
+    if (searchTerm == null || searchTerm.trim().isEmpty()) {
+      return Collections.emptyList();
     }
+    String body = search(searchTerm.trim(), false);
+    try {
+      return parseItems(new JSONObject(body));
+    } catch (JSONException e) {
+      throw new IOException("Unexpected response format from eBay", e);
+    }
+  }
 
-    String accessToken = this.ApplicationAccessToken.get().getToken();
-
-    // 2. Build the request URL
+  // HTTP Handling for generic item search
+  /** Returns the raw JSON body for the eBay Browse API lookup as a string. */
+  private String search(String term, boolean isRetry) throws IOException {
     HttpUrl url =
-        Objects.requireNonNull(HttpUrl.parse(this.BASE_URL))
+        Objects.requireNonNull(
+                HttpUrl.parse(this.baseUrlApi + "/buy/browse/v1/item_summary/search"))
             .newBuilder()
-            .addQueryParameter("q", searchTerm)
+            .addQueryParameter("q", term)
+            .addQueryParameter("limit", String.valueOf(PAGE_SIZE))
+            .addQueryParameter("filter", "buyingOptions:{FIXED_PRICE}")
             .build();
 
-    // 3. Attach the required headers
     Request request =
         new Request.Builder()
             .url(url)
-            .header("Authorization", "Bearer " + accessToken)
-            .header(
-                "X-EBAY-C-MARKETPLACE-ID", "EBAY_US") // Can support selecting region in the app?
+            .header("Authorization", "Bearer " + this.ApplicationAccessToken.get().getToken())
+            .header("X-EBAY-C-MARKETPLACE-ID", MARKETPLACE)
+            .header("Accept", "application/json")
             .build();
 
-    // 4. Execute the call
     try (Response response = client.newCall(request).execute()) {
-      if (!response.isSuccessful() || response.body() == null) {
-        throw new IOException(
-            "eBay Browse API request failed: " + response.code() + " " + response.message());
+      String body = response.body() == null ? "" : response.body().string();
+      // Retry if the AuthToken has expired
+      if (response.code() == 401 && !isRetry) {
+        return search(term, true);
       }
-
-      // 5. Parse the JSON response
-      ObjectMapper mapper = new ObjectMapper();
-      JsonNode root = mapper.readTree(response.body().string());
-
-      // Isolate the RootNode in the JSON object
-      JsonNode summaries = root.path("itemSummaries");
-      ArrayList<Item> items = new ArrayList<>();
-
-      if (summaries.isArray()) {
-        for (JsonNode summary : summaries) {
-          // --- itemId ---
-          String itemId = summary.path("itemId").asText(null);
-
-          // --- title ---
-          String title = summary.path("title").asText(null);
-
-          // --- price & currency (JSON object: { "value": "...", "currency": "..." })
-          JsonNode priceNode = summary.path("price");
-          double price = 0.0;
-          String currency = null;
-          if (priceNode.isObject()) {
-            price = priceNode.path("value").asDouble(0.0);
-            currency = priceNode.path("currency").asText(null);
-          }
-
-          // --- condition ---
-          String condition = summary.path("condition").asText(null);
-
-          // --- category (primary only) ---
-          String category = null;
-          JsonNode categories = summary.path("categories");
-          if (categories.isArray() && categories.size() > 0) {
-            category = categories.get(0).path("categoryName").asText(null);
-          }
-
-          // 6. Build the domain entity
-          items.add(new Item(itemId, title, price, currency, condition, category));
-        }
+      if (response.code() == 429) {
+        throw new IOException("eBay rate limit reached");
       }
+      if (!response.isSuccessful()) {
+        throw new IOException("eBay search failed: HTTP " + response.code() + " " + body);
+      }
+      return body;
+    }
+  }
 
-      return items;
+  /** Returns a list of Item entities, given an eBay API search JSONObject. */
+  List<Item> parseItems(JSONObject root) {
+    JSONArray summaries = root.optJSONArray("itemSummaries");
+    List<Item> items = new ArrayList<>();
+    if (summaries == null) {
+      return items; // eBay omits the field when nothing matches
+    }
+    for (int i = 0; i < summaries.length(); i++) {
+      JSONObject s = summaries.getJSONObject(i);
+      JSONObject price = s.optJSONObject("price");
+      if (price == null) {
+        continue;
+      }
+      try {
+        items.add(
+            itemFactory.create(
+                s.optString("itemId", null),
+                s.optString("title", null),
+                price.optString("value", null),
+                price.optString("currency", null),
+                s.optString("condition", null),
+                firstCategoryName(s.optJSONArray("categories")),
+                feedback(s.optJSONObject("seller"))));
+      } catch (IllegalArgumentException e) {
+        // NumberFormatException is an IllegalArgumentException: bad row, skip it
+      }
+    }
+    return items;
+  }
+
+  /** Returns the "primary" category associated with a searched item's listing. */
+  private static String firstCategoryName(JSONArray categories) {
+    if (categories == null || categories.length() == 0) {
+      return null;
+    }
+    return categories.getJSONObject(0).optString("categoryName", null);
+  }
+
+  /** Returns the feedback percentage for the seller associated with a particular item listing. */
+  private static Double feedback(JSONObject seller) {
+    if (seller == null) {
+      return null;
+    }
+    try {
+      return Double.valueOf(seller.getString("feedbackPercentage"));
+    } catch (JSONException | NumberFormatException e) {
+      return null;
     }
   }
 }
