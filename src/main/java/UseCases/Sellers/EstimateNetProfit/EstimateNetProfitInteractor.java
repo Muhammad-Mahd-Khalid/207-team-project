@@ -2,7 +2,7 @@ package UseCases.Sellers.EstimateNetProfit;
 
 import Entities.Item;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.util.List;
 
 /** Interactor for estimating the net profit of an eBay item. */
 public class EstimateNetProfitInteractor {
@@ -28,13 +28,13 @@ public class EstimateNetProfitInteractor {
   public EstimateNetProfitOutputData execute(EstimateNetProfitInputData inputData)
       throws IOException {
 
-    ArrayList<Item> marketItems = dataAccess.getItemsForSearchTerm(inputData.getSearchTerm());
+    List<Item> marketItems = dataAccess.getItemsForSearchTerm(inputData.getSearchTerm());
 
-    double saleAmount = inputData.getTargetSellingPrice() + inputData.getShippingCost();
+    double saleAmount = inputData.getTargetSellingPrice() + inputData.getBuyerShippingCharge();
 
     double ebayFee = calculateEbayFee(saleAmount);
-
-    double totalSellingCost = ebayFee + inputData.getShippingCost() + inputData.getPackagingCost();
+    double totalSellingCost =
+        ebayFee + inputData.getSellerShippingCost() + inputData.getPackagingCost();
 
     double netProfit = inputData.getTargetSellingPrice() - totalSellingCost;
 

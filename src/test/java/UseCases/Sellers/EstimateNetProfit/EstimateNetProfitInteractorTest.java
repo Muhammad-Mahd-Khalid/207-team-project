@@ -14,17 +14,16 @@ class EstimateNetProfitInteractorTest {
   void testMarketPriceStatistics() throws Exception {
     ArrayList<Item> items = new ArrayList<>();
 
-    items.add(new Item("1", "Item 1", 100.0, "CAD", "New", "Electronics"));
-    items.add(new Item("2", "Item 2", 200.0, "CAD", "New", "Electronics"));
-    items.add(new Item("3", "Item 3", 300.0, "CAD", "New", "Electronics"));
+    items.add(new Item("1", "Item 1", 100.0, "CAD", "New", "Electronics", 98.0));
+    items.add(new Item("2", "Item 2", 200.0, "CAD", "New", "Electronics", 97.0));
+    items.add(new Item("3", "Item 3", 300.0, "CAD", "New", "Electronics", 96.0));
 
     EstimateNetProfitDataAccessInterface dataAccess = searchTerm -> items;
 
     EstimateNetProfitInteractor interactor = new EstimateNetProfitInteractor(dataAccess);
 
     EstimateNetProfitInputData input =
-        new EstimateNetProfitInputData("headphones", 250.0, 20.0, 5.0);
-
+        new EstimateNetProfitInputData("headphones", 250.0, 20.0, 20.0, 5.0);
     EstimateNetProfitOutputData output = interactor.execute(input);
 
     assertEquals(100.0, output.getLowestMarketPrice());
@@ -41,15 +40,14 @@ class EstimateNetProfitInteractorTest {
     EstimateNetProfitDataAccessInterface dataAccess = searchTerm -> items;
 
     EstimateNetProfitInteractor interactor = new EstimateNetProfitInteractor(dataAccess);
-
     EstimateNetProfitInputData input =
-        new EstimateNetProfitInputData("headphones", 250.0, 20.0, 5.0);
+        new EstimateNetProfitInputData("headphones", 250.0, 20.0, 20.0, 5.0);
 
     EstimateNetProfitOutputData output = interactor.execute(input);
 
-    assertEquals(36.8, output.getEbayFee(), 0.01);
-    assertEquals(61.8, output.getTotalSellingCost(), 0.01);
-    assertEquals(188.2, output.getNetProfit(), 0.01);
-    assertEquals(75.28, output.getProfitMargin(), 0.01);
+    assertEquals(37.12, output.getEbayFee(), 0.01);
+    assertEquals(62.12, output.getTotalSellingCost(), 0.01);
+    assertEquals(187.88, output.getNetProfit(), 0.01);
+    assertEquals(75.152, output.getProfitMargin(), 0.01);
   }
 }

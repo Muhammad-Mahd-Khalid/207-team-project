@@ -5,15 +5,21 @@ public class EstimateNetProfitInputData {
 
   private final String searchTerm;
   private final double targetSellingPrice;
-  private final double shippingCost;
+  private final double buyerShippingCharge;
+  private final double sellerShippingCost;
   private final double packagingCost;
 
   /** Creates input data for the Estimate Net Profit use case. */
   public EstimateNetProfitInputData(
-      String searchTerm, double targetSellingPrice, double shippingCost, double packagingCost) {
+      String searchTerm,
+      double targetSellingPrice,
+      double buyerShippingCharge,
+      double sellerShippingCost,
+      double packagingCost) {
     this.searchTerm = searchTerm;
     this.targetSellingPrice = targetSellingPrice;
-    this.shippingCost = shippingCost;
+    this.buyerShippingCharge = buyerShippingCharge;
+    this.sellerShippingCost = sellerShippingCost;
     this.packagingCost = packagingCost;
   }
 
@@ -27,9 +33,12 @@ public class EstimateNetProfitInputData {
     return targetSellingPrice;
   }
 
-  /** Returns the estimated shipping cost. */
-  public double getShippingCost() {
-    return shippingCost;
+  public double getBuyerShippingCharge() {
+    return buyerShippingCharge;
+  }
+
+  public double getSellerShippingCost() {
+    return sellerShippingCost;
   }
 
   /** Returns the estimated packaging cost. */
